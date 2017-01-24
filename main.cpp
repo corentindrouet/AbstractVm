@@ -6,17 +6,25 @@
 /*   By: cdrouet <cdrouet@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/01/23 15:27:42 by cdrouet           #+#    #+#             */
-/*   Updated: 2017/01/23 15:33:06 by cdrouet          ###   ########.fr       */
+/*   Updated: 2017/02/02 10:54:20 by cdrouet          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "TOperand.class.hpp"
+#include "ExecFile.class.hpp"
 
-int main( void )
+int main( int argc, char **argv )
 {
-	IOperand	*op;
-
-	op = Operand<int8_t>::Operand().createOperand(Int8, "56");
-	std::cout << op->toString() << std::endl;
+  try {
+    if (argc == 1)
+      ExecFile::ExecFile().useCin();
+    else if (argc == 2)
+      ExecFile::ExecFile().useFile(argv[1]);
+    else {
+      std::cout << "0 or 1 arguments" << std::endl;
+      return 1;
+    }
+  } catch (std::exception & e) {
+    std::cout << e.what() << std::endl;
+  }
 	return 0;
 }

@@ -6,13 +6,15 @@
 /*   By: cdrouet <cdrouet@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/01/23 09:42:48 by cdrouet           #+#    #+#             */
-/*   Updated: 2017/01/23 15:26:42 by cdrouet          ###   ########.fr       */
+/*   Updated: 2017/01/26 13:45:53 by cdrouet          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef IOPERAND_CLASS_HPP
 # define IOPERAND_CLASS_HPP
 # include <iostream>
+# include <string>
+# include "Abstract.hpp"
 
 class IOperand {
 

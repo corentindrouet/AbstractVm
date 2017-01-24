@@ -6,39 +6,48 @@
 /*   By: cdrouet <cdrouet@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/01/23 09:53:03 by cdrouet           #+#    #+#             */
-/*   Updated: 2017/01/23 15:45:33 by cdrouet          ###   ########.fr       */
+/*   Updated: 2017/02/02 13:36:33 by cdrouet          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef TOPERAND_CLASS_HPP
 # define TOPERAND_CLASS_HPP
+
 # include "IOperand.class.hpp"
 # include <vector>
-
-enum	eOperandType {
-	Int8,
-	Int16,
-	Int32,
-	Float,
-	Double
-};
+# include <string>
+# include <math.h>
+# include <limits.h>
+# include "Factory.class.hpp"
 
 template< typename T >
-class Operand : IOperand {
+class Operand : public IOperand {
 
 	public:
-		Operand( void ) {
+		Operand<T>( void ) {
 			return;
 		}
 
-		Operand( Operand const & copy ) {
+		Operand<T>( eOperandType type, std::string const & value ) :
+			_type(type) {
+			this->_precision = 0;
+			this->_stringRep = std::to_string(static_cast<T>(stod(value, NULL)));
+			if (static_cast<double>(stod(value, NULL)) > std::numeric_limits<T>::max())
+				throw OverflowException();
+			else if (static_cast<double>(stod(value, NULL)) < std::numeric_limits<T>::lowest())
+				throw UnderflowException();
+			this->_value = static_cast<T>(stod(value, NULL));
+			return;
+		}
+
+		Operand<T>( Operand const & copy ) {
 			*this = copy;
 			return;
 		}
 
-		~Operand<T>( void ) { return; };
+		~Operand<T>( void ) { return; }
 
-		Operand	&operator=( Operand const & otherOperand ) {
+		Operand<T>	&operator=( Operand const & otherOperand ) {
 			this->_type = otherOperand.getType();
 			this->_precision = otherOperand.getPrecision();
 			this->_value = static_cast<T>(otherOperand.getValue());
@@ -57,81 +66,99 @@ class Operand : IOperand {
 			return this->_value;
 		}
 
-		IOperand const	*operator+( IOperand const & rhs ) const {
-			return new Operand((rhs.getType() > this->_type) ?
+		const IOperand	*operator+( IOperand const & rhs ) const {
+			return Factory::Factory().createOperand((rhs.getType() > this->_type) ?
 					rhs.getType() : this->_type,
-					rhs.getValue() + this->_value);
+					std::to_string(static_cast<double>(stod(rhs.toString(), NULL)) + this->_value));
 		}
 
 		IOperand const	*operator-( IOperand const & rhs ) const {
-			return new Operand((rhs.getType() > this->_type) ?
+			return Factory::Factory().createOperand((rhs.getType() > this->_type) ?
 					rhs.getType() : this->_type,
-					rhs.getValue() - this->_value);
+					std::to_string(this->_value - static_cast<double>(stod(rhs.toString(), NULL))));
 		}
 
 		IOperand const	*operator*( IOperand const & rhs ) const {
-			return new Operand((rhs.getType() > this->_type) ?
+			return Factory::Factory().createOperand((rhs.getType() > this->_type) ?
 					rhs.getType() : this->_type,
-					rhs.getValue() * this->_value);
+					std::to_string(static_cast<double>(stod(rhs.toString(), NULL)) * this->_value));
 		}
 
 		IOperand const	*operator/( IOperand const & rhs ) const {
-			if (rhs == 0)
-				throw std::exception();
-			return new Operand((rhs.getType() > this->_type) ?
+			if (static_cast<T>(stod(rhs.toString(), NULL)) == 0)
+				throw DivideZeroException();
+			return Factory::Factory().createOperand((rhs.getType() > this->_type) ?
 					rhs.getType() : this->_type,
-					rhs.getValue() + this->_value);
+					std::to_string(this->_value / static_cast<double>(stod(rhs.toString(), NULL))));
 		}
 
 		IOperand const	*operator%( IOperand const & rhs ) const {
-			if (rhs == 0)
-				throw std::exception();
-			return new Operand((rhs.getType() > this->_type) ?
+			if (static_cast<T>(stod(rhs.toString(), NULL)) == 0)
+				throw DivideZeroException();
+			return Factory::Factory().createOperand((rhs.getType() > this->_type) ?
 					rhs.getType() : this->_type,
-					rhs.getValue() + this->_value);
+					std::to_string(fmod(static_cast<double>(this->_value), stod(rhs.toString(), NULL))));
 		}
 
 		std::string const	&toString( void ) const {
-			return std::to_string(this->_value);
+			return this->_stringRep;
 		}
 
-		IOperand const	*createOperand( eOperantType type, std::string const & value ) const {
-			vector<IOperand*(*)(std::string &)>	create(5);
-			create.push_back(&(this->createInt8));
-			create.push_back(&(this->createInt16));
-			create.push_back(&(this->createInt32));
-			create.push_back(&(this->createFloat));
-			create.push_back(&(this->createDouble));
-			create[type](value);
-		}
+		class OverflowException : public std::exception {
+
+			public:
+				OverflowException( void ) { return; }
+				OverflowException( OverflowException const & copy ) {
+					*this = copy;
+					return;
+				}
+				~OverflowException( void ) throw() { return; }
+				OverflowException	&operator=( OverflowException const & ) {
+					return *this;
+				}
+				virtual const char *what() const throw() {
+					return ("Value overflow");
+				}
+		};
+
+		class UnderflowException : public std::exception {
+
+			public:
+				UnderflowException( void ) { return; }
+				UnderflowException( UnderflowException const & copy ) {
+					*this = copy;
+					return;
+				}
+				~UnderflowException( void ) throw() { return; }
+				UnderflowException	&operator=( UnderflowException const & ) {
+					return *this;
+				}
+				virtual const char *what() const throw() {
+					return ("Value underflow");
+				}
+		};
+
+		class DivideZeroException : public std::exception {
+
+			public:
+				DivideZeroException( void ) { return; }
+				DivideZeroException( DivideZeroException const & copy ) {
+					*this = copy;
+					return;
+				}
+				~DivideZeroException( void ) throw() { return; }
+				DivideZeroException	&operator=( DivideZeroException const & ) {
+					return *this;
+				}
+				virtual const char *what() const throw() {
+					return ("Divide by 0");
+				}
+		};
 
 	private:
-		Operand<T>( eOperandType type, std::string const & value ) :
-			_type(type) {
-			this->_precision = 0;
-			this->_value = dynamic_cast<T>(stod(value, NULL));
-			if ( this->_value == NULL )
-				throw std::exception();
-			return;
-		}
-		IOperand const * createInt8( std::string const & value ) const {
-			return new this->Operand<int8_t>(eOperandType::Int8, value);
-		}
-		IOperand const * createInt16( std::string const & value ) const {
-			return new this->Operand<int16_t>(eOperandType::Int16, value);
-		}
-		IOperand const * createInt32( std::string const & value ) const {
-			return new this->Operand<int32_t>(eOperandType::Int32, value);
-		}
-		IOperand const * createFloat( std::string const & value ) const {
-			return new this->Operand<float>(eOperandType::Float, value);
-		}
-		IOperand const * createDouble( std::string const & value ) const {
-			return new this->Operand<double>(eOperandType::Double, value);
-		}
-		eOperandType	_type;
-		int				_precision;
-		T				_value;
+		eOperandType		_type;
+		int					_precision;
+		T					_value;
+		std::string			_stringRep;
 };
-
 #endif
