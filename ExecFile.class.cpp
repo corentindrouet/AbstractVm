@@ -6,7 +6,7 @@
 /*   By: cdrouet <cdrouet@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/01/30 10:05:56 by cdrouet           #+#    #+#             */
-/*   Updated: 2017/02/02 12:52:04 by cdrouet          ###   ########.fr       */
+/*   Updated: 2017/02/07 09:36:24 by cdrouet          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 
 ExecFile::ExecFile( void ) {
 	this->_fileName = "Input";
+  this->_error = false;
 	return;
 }
 
@@ -60,14 +61,20 @@ void 	ExecFile::useCin( void ) {
     if (std::cin.eof())
       break;
     if (!std::regex_match(tmp, std::regex("^(\\s*;.*|\\s*$)"))) {
-      if (!checkForErrors( tmp ))
-        throw FileExceptions(tmp, line);
-      this->_instructs.push_back(new Instruction(tmp));
+      if (!checkForErrors( tmp, line ))
+        this->_error = true;
+      else
+        this->_instructs.push_back(new Instruction(tmp));
     }
 
   }	while (tmp != ";;");
-  if (std::cin.eof() || !this->_instructs.size() || this->_instructs.back()->getInstruct() != "exit")
-      throw FileExceptions(*this);
+  if (std::cin.eof()) {
+    this->_errors << std::string(this->_fileName + ": Bad end of file !");
+    this->_error = true;
+  }
+  this->checkEndErrors();
+  if (this->_error)
+      throw FileExceptions( this->_errors.str() );
   this->dispatch();
 	return;
 }
@@ -77,25 +84,54 @@ void 	ExecFile::useFile( std::string fileName ) {
   int         line = 0;
 
 	this->_file.open(fileName, std::ios::out);
-	tmp = "Input";
-	while (!this->_file.eof()) {
-		std::getline(this->_file, tmp);
+  if (!this->_file.is_open())
+    throw FileExceptions(fileName + ": Can't open this file !");
+  tmp = fileName;
+  this->_fileName = fileName;
+  while (!this->_file.eof()) {
+    std::getline(this->_file, tmp);
     line++;
-		if (!std::regex_match(tmp, std::regex("^(\\s*;.*|\\s*$)"))) {
-			if (!checkForErrors( tmp ))
-				throw FileExceptions(tmp, line);
-			this->_instructs.push_back(new Instruction(tmp));
-		}
-	}
-	if (!this->_instructs.size() || this->_instructs.back()->getInstruct() != "exit")
-		throw FileExceptions(*this);
+    if (!std::regex_match(tmp, std::regex("^(\\s*;.*|\\s*$)"))) {
+      if (!checkForErrors( tmp, line ))
+        this->_error = true;
+      else
+        this->_instructs.push_back(new Instruction(tmp));
+    }
+  }
+  this->checkEndErrors();
+  if (this->_error)
+    throw FileExceptions( this->_errors.str() );
   this->dispatch();
   this->_file.close();
   return;
 }
 
-bool	ExecFile::checkForErrors( std::string str ) {
-	return regex_match(str, std::regex("^\\s*(((push|assert)\\s+((float|double)\\(([+-]{0,1}[\\d.?]+)\\)|(int(8|16|32))\\(([+-]{0,1}[\\d]+)\\)))|(add|pop|dump|sub|mul|div|mod|print|exit))\\s*(;.*|$)"));
+bool	ExecFile::checkForErrors( std::string str, int line ) {
+  if (!regex_match(str, std::regex("^\\s*(((push|assert)\\s+((float|double)"
+          "\\(([+-]{0,1}[\\d.?]+)\\)|(int(8|16|32))\\(([+-]{0,1}[\\d]+)\\)))|"
+          "(add|pop|dump|sub|mul|div|mod|print|exit))\\s*(;.*|$)"))) {
+    if (this->_errors.str().size())
+      this->_errors << std::endl;
+    this->_errors << std::string(this->_fileName + ": Bad instruction line: " +
+        std::to_string(line) + " <" + str + ">");
+    return false;
+  }
+  return true;
+}
+
+void  ExecFile::checkEndErrors( void ) {
+	if (!this->_instructs.size() && !this->_error) {
+    this->_error = true;
+    this->_errors << std::string(this->_fileName + ": No instruction found ! ");
+  }
+  else if (this->_instructs.size() && !std::regex_match(
+        this->_instructs.back()->getInstruct(),
+        std::regex("^\\s*exit\\s*($|;.*$)"))) {
+    if (this->_errors.str().size())
+      this->_errors << std::endl;
+    this->_error = true;
+    this->_errors << std::string(this->_fileName + ": No exit found !");
+  }
 }
 
 static bool	needArguments( std::string f ) {
@@ -119,7 +155,7 @@ void	ExecFile::dispatch( void ) {
 	f["print"] = &AsmOperator::print;
 	f["exit"] = &AsmOperator::exit;
 
-  for ( unsigned long i = 0; i < (this->_instructs.size() - 1); i++ ) {
+  for ( unsigned long i = 0; i < this->_instructs.size(); i++ ) {
     if (needArguments(this->_instructs[i]->getInstruct()))
       (this->_stack.*fWithArgs[this->_instructs[i]->getInstruct()])(*(this->_instructs[i]));
     else
@@ -127,30 +163,7 @@ void	ExecFile::dispatch( void ) {
   }
 }
 
-ExecFile::FileExceptions::FileExceptions( void ) {
-  this->_isFile = false;
-  this->_fileName = "";
-  this->_instructSize = -1;
-  this->_badInstruct = "";
-  this->_line = 0;
-  return;
-}
-
-ExecFile::FileExceptions::FileExceptions( ExecFile const & file ) {
-  this->_isFile = true;
-  this->_fileName = file.getFileName();
-  this->_instructSize = file.getInstructions().size();
-  this->_badInstruct = "";
-  this->_line = 0;
-  return;
-}
-
-ExecFile::FileExceptions::FileExceptions( std::string const badInstruct, int line ) {
-  this->_isFile = false;
-  this->_fileName = "";
-  this->_instructSize = -1;
-  this->_badInstruct = badInstruct;
-  this->_line = line;
+ExecFile::FileExceptions::FileExceptions( std::string const &errors ) : _errors(errors) {
   return;
 }
 
@@ -168,13 +181,5 @@ ExecFile::FileExceptions  &ExecFile::FileExceptions::operator=( ExecFile::FileEx
 }
 
 const char *ExecFile::FileExceptions::what( void ) const throw() {
-  if (this->_isFile) {
-    if (!this->_instructSize)
-      return (std::string("No instruction found in file: " + this->_fileName + " !").c_str());
-    else
-      return (std::string("No exit found in file: " + this->_fileName + " !").c_str());
-  } else if (this->_badInstruct != "") {
-    return (std::string("Bad instruction line: " + std::to_string(this->_line) + " <" + this->_badInstruct + ">").c_str());
-  }
-  return (std::string("An error occured !").c_str());
+  return this->_errors.c_str();
 }

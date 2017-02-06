@@ -6,7 +6,7 @@
 /*   By: cdrouet <cdrouet@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/01/25 09:03:46 by cdrouet           #+#    #+#             */
-/*   Updated: 2017/02/02 13:03:33 by cdrouet          ###   ########.fr       */
+/*   Updated: 2017/02/06 09:46:02 by cdrouet          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 # include <iostream>
 # include <vector>
 # include <string>
+# include <sstream>
 # include "instruction.class.hpp"
 # include "IOperand.class.hpp"
 # include "Factory.class.hpp"
@@ -54,6 +55,7 @@ class AsmOperator {
 
 	private:
 		std::vector<const IOperand*>	_stack;
+    std::stringstream             _output;
 };
 
 #endif

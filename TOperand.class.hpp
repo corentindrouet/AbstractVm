@@ -6,7 +6,7 @@
 /*   By: cdrouet <cdrouet@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/01/23 09:53:03 by cdrouet           #+#    #+#             */
-/*   Updated: 2017/02/02 13:36:33 by cdrouet          ###   ########.fr       */
+/*   Updated: 2017/02/07 08:51:34 by cdrouet          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,9 @@
 # include "IOperand.class.hpp"
 # include <vector>
 # include <string>
-# include <math.h>
+# include <cmath>
 # include <limits.h>
+# include <stdexcept>
 # include "Factory.class.hpp"
 
 template< typename T >
@@ -30,12 +31,12 @@ class Operand : public IOperand {
 
 		Operand<T>( eOperandType type, std::string const & value ) :
 			_type(type) {
-			this->_precision = 0;
+			this->_precision = type;
 			this->_stringRep = std::to_string(static_cast<T>(stod(value, NULL)));
 			if (static_cast<double>(stod(value, NULL)) > std::numeric_limits<T>::max())
-				throw OverflowException();
+        throw std::overflow_error("Value overflow");
 			else if (static_cast<double>(stod(value, NULL)) < std::numeric_limits<T>::lowest())
-				throw UnderflowException();
+        throw std::underflow_error("Value underflow");
 			this->_value = static_cast<T>(stod(value, NULL));
 			return;
 		}
@@ -67,35 +68,35 @@ class Operand : public IOperand {
 		}
 
 		const IOperand	*operator+( IOperand const & rhs ) const {
-			return Factory::Factory().createOperand((rhs.getType() > this->_type) ?
+			return Factory::Factory().createOperand((rhs.getPrecision() > this->_precision) ?
 					rhs.getType() : this->_type,
 					std::to_string(static_cast<double>(stod(rhs.toString(), NULL)) + this->_value));
 		}
 
 		IOperand const	*operator-( IOperand const & rhs ) const {
-			return Factory::Factory().createOperand((rhs.getType() > this->_type) ?
+			return Factory::Factory().createOperand((rhs.getPrecision() > this->_precision) ?
 					rhs.getType() : this->_type,
 					std::to_string(this->_value - static_cast<double>(stod(rhs.toString(), NULL))));
 		}
 
 		IOperand const	*operator*( IOperand const & rhs ) const {
-			return Factory::Factory().createOperand((rhs.getType() > this->_type) ?
+			return Factory::Factory().createOperand((rhs.getPrecision() > this->_precision) ?
 					rhs.getType() : this->_type,
 					std::to_string(static_cast<double>(stod(rhs.toString(), NULL)) * this->_value));
 		}
 
 		IOperand const	*operator/( IOperand const & rhs ) const {
 			if (static_cast<T>(stod(rhs.toString(), NULL)) == 0)
-				throw DivideZeroException();
-			return Factory::Factory().createOperand((rhs.getType() > this->_type) ?
+				throw std::domain_error("Divide by 0");
+			return Factory::Factory().createOperand((rhs.getPrecision() > this->_precision) ?
 					rhs.getType() : this->_type,
 					std::to_string(this->_value / static_cast<double>(stod(rhs.toString(), NULL))));
 		}
 
 		IOperand const	*operator%( IOperand const & rhs ) const {
 			if (static_cast<T>(stod(rhs.toString(), NULL)) == 0)
-				throw DivideZeroException();
-			return Factory::Factory().createOperand((rhs.getType() > this->_type) ?
+				throw std::domain_error("Divide by 0");
+			return Factory::Factory().createOperand((rhs.getPrecision() > this->_precision) ?
 					rhs.getType() : this->_type,
 					std::to_string(fmod(static_cast<double>(this->_value), stod(rhs.toString(), NULL))));
 		}
@@ -103,57 +104,6 @@ class Operand : public IOperand {
 		std::string const	&toString( void ) const {
 			return this->_stringRep;
 		}
-
-		class OverflowException : public std::exception {
-
-			public:
-				OverflowException( void ) { return; }
-				OverflowException( OverflowException const & copy ) {
-					*this = copy;
-					return;
-				}
-				~OverflowException( void ) throw() { return; }
-				OverflowException	&operator=( OverflowException const & ) {
-					return *this;
-				}
-				virtual const char *what() const throw() {
-					return ("Value overflow");
-				}
-		};
-
-		class UnderflowException : public std::exception {
-
-			public:
-				UnderflowException( void ) { return; }
-				UnderflowException( UnderflowException const & copy ) {
-					*this = copy;
-					return;
-				}
-				~UnderflowException( void ) throw() { return; }
-				UnderflowException	&operator=( UnderflowException const & ) {
-					return *this;
-				}
-				virtual const char *what() const throw() {
-					return ("Value underflow");
-				}
-		};
-
-		class DivideZeroException : public std::exception {
-
-			public:
-				DivideZeroException( void ) { return; }
-				DivideZeroException( DivideZeroException const & copy ) {
-					*this = copy;
-					return;
-				}
-				~DivideZeroException( void ) throw() { return; }
-				DivideZeroException	&operator=( DivideZeroException const & ) {
-					return *this;
-				}
-				virtual const char *what() const throw() {
-					return ("Divide by 0");
-				}
-		};
 
 	private:
 		eOperandType		_type;

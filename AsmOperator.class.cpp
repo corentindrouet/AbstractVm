@@ -6,7 +6,7 @@
 /*   By: cdrouet <cdrouet@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/01/25 12:35:05 by cdrouet           #+#    #+#             */
-/*   Updated: 2017/02/02 13:34:39 by cdrouet          ###   ########.fr       */
+/*   Updated: 2017/02/07 09:37:23 by cdrouet          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,11 +43,7 @@ std::vector<const IOperand*>		AsmOperator::getStack( void ) const {
 }
 
 void	AsmOperator::push( Instruction const & value ) {
-  try {
     this->_stack.push_back(Factory::Factory().createOperand(value.getType(), value.getValue()));
-  } catch ( std::exception & e ) {
-    std::cout << e.what() << std::endl;
-  }
 }
 
 void	AsmOperator::pop( void ) {
@@ -59,7 +55,7 @@ void	AsmOperator::pop( void ) {
 
 void	AsmOperator::dump( void ) {
   for ( int i = (this->_stack.size() - 1); i >= 0; i-- ) {
-    std::cout << i << " " << this->_stack[i]->toString() << std::endl;
+    this->_output << this->_stack[i]->toString() << std::endl;
   }
 }
 
@@ -68,6 +64,8 @@ void	AsmOperator::assert( Instruction const & value ) {
 
   if (this->_stack.size() < 1)
     throw StackExceptions("Error: assert on empty stack !");
+  if (this->_stack.back()->getType() != tmp->getType())
+    throw StackExceptions("Error: assert on different type !");
   if (stod(this->_stack.back()->toString()) != stod(tmp->toString()))
     throw StackExceptions("Error: assert between " + this->_stack.back()->toString() + " and " + tmp->toString() + " is false !");
   return;
@@ -147,13 +145,14 @@ void	AsmOperator::print( void ) {
   if (this->_stack.size() < 1)
     throw StackExceptions("Error: print on empty stack");
   if (this->_stack.back()->getType() != Int8)
-    throw StackExceptions("The last stack value isnot an Int8");
+    throw StackExceptions("The last stack value is not an Int8");
   if (!std::isprint(std::stoi(this->_stack.back()->toString())))
     throw StackExceptions("Character not printable");
-  std::cout << static_cast<char>(std::stoi(this->_stack.back()->toString())) << std::endl;
+  this->_output << static_cast<char>(std::stoi(this->_stack.back()->toString())) << std::endl;
 }
 
 void	AsmOperator::exit( void ) {
+  std::cout << this->_output.str();
   for ( int i = (this->_stack.size() - 1); i >= 0; i--) {
     delete this->_stack[i];
     this->_stack.pop_back();

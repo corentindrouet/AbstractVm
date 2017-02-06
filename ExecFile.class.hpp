@@ -6,7 +6,7 @@
 /*   By: cdrouet <cdrouet@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/01/30 09:24:20 by cdrouet           #+#    #+#             */
-/*   Updated: 2017/02/02 13:02:00 by cdrouet          ###   ########.fr       */
+/*   Updated: 2017/02/06 14:07:57 by cdrouet          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,28 +35,26 @@ class ExecFile {
 		std::vector<Instruction*>	getInstructions( void ) const;
     class FileExceptions : public std::exception {
       public:
-        FileExceptions( void );
-        FileExceptions( ExecFile const &file );
-        FileExceptions( std::string const badInstruct, int line );
+        FileExceptions( std::string const &errors );
         FileExceptions( ExecFile::FileExceptions const & copy );
         ~FileExceptions( void ) throw();
         FileExceptions  &operator=( ExecFile::FileExceptions const & );
         virtual const char  *what( void ) const throw();
       private:
-        bool        _isFile;
-        std::string _fileName;
-        int         _instructSize;
-        std::string _badInstruct;
-        int         _line;
+        FileExceptions( void );
+        std::string const _errors;
     };
 
 	private:
-		bool		checkForErrors( std::string str );
+		bool		checkForErrors( std::string str, int line );
+    void    checkEndErrors( void );
 		void		dispatch( void );
 		AsmOperator	_stack;
 		std::string	_fileName;
 		std::ifstream	_file;
 		std::vector<Instruction*>	_instructs;
+    bool                      _error;
+    std::stringstream         _errors;
 };
 
 #endif
