@@ -6,7 +6,7 @@
 /*   By: cdrouet <cdrouet@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/01/31 09:51:31 by cdrouet           #+#    #+#             */
-/*   Updated: 2017/02/07 11:43:06 by cdrouet          ###   ########.fr       */
+/*   Updated: 2017/02/07 12:58:07 by cdrouet          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,10 +24,10 @@ Instruction::Instruction( std::string const line, int nbLine ) : _instruct(""), 
 
   this->_fullInstruct = line;
   this->_line = nbLine;
-	tmp = std::strtok(cline, " ()");
+	tmp = std::strtok(cline, " \t();");
 	if (tmp)
 		this->_instruct = tmp;
-	tmp = std::strtok(NULL, " ()");
+	tmp = std::strtok(NULL, " \t();");
 	if (tmp) {
 		if (strcmp(tmp, "int8") == 0)
 			this->_type = Int8;
@@ -39,7 +39,7 @@ Instruction::Instruction( std::string const line, int nbLine ) : _instruct(""), 
 			this->_type = Float;
 		else if (strcmp(tmp, "double") == 0)
 			this->_type = Double;
-		tmp = std::strtok(NULL, " ()");
+		tmp = std::strtok(NULL, " \t();");
 		if (tmp)
 			this->_value = tmp;
 	}

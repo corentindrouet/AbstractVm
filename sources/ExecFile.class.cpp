@@ -6,7 +6,7 @@
 /*   By: cdrouet <cdrouet@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/01/30 10:05:56 by cdrouet           #+#    #+#             */
-/*   Updated: 2017/02/07 11:42:37 by cdrouet          ###   ########.fr       */
+/*   Updated: 2017/02/07 12:57:21 by cdrouet          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -108,7 +108,7 @@ void 	ExecFile::useFile( std::string fileName ) {
 
 bool	ExecFile::checkForErrors( std::string str, int line ) {
   if (!regex_match(str, std::regex("^\\s*(((push|assert)\\s+((float|double)"
-          "\\(([+-]{0,1}[\\d.?]+)\\)|(int(8|16|32))\\(([+-]{0,1}[\\d]+)\\)))|"
+          "\\(\\s*([+-]{0,1}[\\d.?]+)\\s*\\)|(int(8|16|32))\\(\\s*([+-]{0,1}[\\d]+)\\s*\\)))|"
           "(add|pop|dump|sub|mul|div|mod|print|exit))\\s*(;.*|$)"))) {
     if (this->_errors.str().size())
       this->_errors << std::endl;
