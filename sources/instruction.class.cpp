@@ -6,7 +6,7 @@
 /*   By: cdrouet <cdrouet@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/01/31 09:51:31 by cdrouet           #+#    #+#             */
-/*   Updated: 2017/02/02 09:51:19 by cdrouet          ###   ########.fr       */
+/*   Updated: 2017/02/07 11:43:06 by cdrouet          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,11 +17,13 @@ Instruction::Instruction( void ) : _instruct(NULL), _type(Int8), _value(NULL) {
 	return;
 }
 
-Instruction::Instruction( std::string line ) : _instruct(""), _type(Int8), _value("") {
+Instruction::Instruction( std::string const line, int nbLine ) : _instruct(""), _type(Int8), _value("") {
 	char	*cline = new char[line.length() + 1];
 	strcpy(cline, line.c_str());
 	char	*tmp = NULL;
 
+  this->_fullInstruct = line;
+  this->_line = nbLine;
 	tmp = std::strtok(cline, " ()");
 	if (tmp)
 		this->_instruct = tmp;
@@ -71,4 +73,12 @@ eOperandType	Instruction::getType( void ) const {
 
 std::string	Instruction::getValue( void ) const {
 	return this->_value;
+}
+
+std::string	Instruction::getFullInstruct( void ) const {
+	return this->_fullInstruct;
+}
+
+int	Instruction::getLine( void ) const {
+	return this->_line;
 }

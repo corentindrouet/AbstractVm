@@ -6,7 +6,7 @@
 /*   By: cdrouet <cdrouet@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/01/30 10:05:56 by cdrouet           #+#    #+#             */
-/*   Updated: 2017/02/07 09:46:31 by cdrouet          ###   ########.fr       */
+/*   Updated: 2017/02/07 11:42:37 by cdrouet          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,7 +64,7 @@ void 	ExecFile::useCin( void ) {
       if (!checkForErrors( tmp, line ))
         this->_error = true;
       else
-        this->_instructs.push_back(new Instruction(tmp));
+        this->_instructs.push_back(new Instruction(tmp, line));
     }
 
   }	while (tmp != ";;");
@@ -95,7 +95,7 @@ void 	ExecFile::useFile( std::string fileName ) {
       if (!checkForErrors( tmp, line ))
         this->_error = true;
       else
-        this->_instructs.push_back(new Instruction(tmp));
+        this->_instructs.push_back(new Instruction(tmp, line));
     }
   }
   this->checkEndErrors();
@@ -145,6 +145,7 @@ void	ExecFile::dispatch( void ) {
 	fWithArgs["push"] = &AsmOperator::push;
 	fWithArgs["assert"] = &AsmOperator::assert;
 	std::map<std::string, void (AsmOperator::*)(void)> f;
+  unsigned long   i;
 	f["pop"] = &AsmOperator::pop;
 	f["dump"] = &AsmOperator::dump;
 	f["add"] = &AsmOperator::add;
@@ -155,11 +156,15 @@ void	ExecFile::dispatch( void ) {
 	f["print"] = &AsmOperator::print;
 	f["exit"] = &AsmOperator::exit;
 
-  for ( unsigned long i = 0; i < this->_instructs.size(); i++ ) {
-    if (needArguments(this->_instructs[i]->getInstruct()))
-      (this->_stack.*fWithArgs[this->_instructs[i]->getInstruct()])(*(this->_instructs[i]));
-    else
-      (this->_stack.*f[this->_instructs[i]->getInstruct()])();
+  try {
+    for ( i = 0; i < this->_instructs.size(); i++ ) {
+      if (needArguments(this->_instructs[i]->getInstruct()))
+        (this->_stack.*fWithArgs[this->_instructs[i]->getInstruct()])(*(this->_instructs[i]));
+      else
+        (this->_stack.*f[this->_instructs[i]->getInstruct()])();
+    }
+  } catch (std::exception & e) {
+    throw FileExceptions(std::string(this->_fileName + ": Line " + std::to_string(this->_instructs[i]->getLine()) + ": Error on instruction -> " + this->_instructs[i]->getFullInstruct() + ": " + e.what()));
   }
 }
 
