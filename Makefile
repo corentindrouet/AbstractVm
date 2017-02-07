@@ -6,7 +6,7 @@
 #    By: cdrouet <cdrouet@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2017/01/24 08:17:02 by cdrouet           #+#    #+#              #
-#    Updated: 2017/02/01 11:26:28 by cdrouet          ###   ########.fr        #
+#    Updated: 2017/02/07 09:44:10 by cdrouet          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,8 +18,8 @@ SRC_NAME= main.cpp \
 		  AsmOperator.class.cpp \
 		  ExecFile.class.cpp \
 		  instruction.class.cpp
-SRC_PATH= ./
-INC_PATH= ./
+SRC_PATH= ./sources/
+INC_PATH= ./includes/
 OBJ_NAME= $(SRC_NAME:.cpp=.o)
 OBJ_PATH= ./obj/
 SRC= $(addprefix $(SRC_PATH), $(SRC_NAME))
@@ -28,7 +28,7 @@ OBJ= $(addprefix $(OBJ_PATH), $(OBJ_NAME))
 .PHONY: all
 all: $(NAME)
 
-$(NAME): $(LIB) $(OBJ)
+$(NAME): $(SRC) $(OBJ)
 	$(CC) $(CFLAGS)  -I$(INC_PATH) -o $(NAME) $(OBJ) -stdlib=libc++ -std=c++0x
 
 $(OBJ_PATH)%.o: $(SRC_PATH)%.cpp
